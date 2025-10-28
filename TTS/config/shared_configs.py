@@ -220,6 +220,12 @@ class BaseDatasetConfig(Coqpit):
         meta_file_attn_mask (str):
             Path to the file that lists the attention mask files used with models that require attention masks to
             train the duration predictor.
+        
+        min_snr (float):
+            Minimum SNR threshold for filtering audio samples. Defaults to None.
+        
+        speaker_ids (list):
+            List of specific speaker IDs to include in training. Defaults to None.
     """
 
     formatter: str = ""
@@ -231,6 +237,8 @@ class BaseDatasetConfig(Coqpit):
     phonemizer: str = ""
     meta_file_val: str = ""
     meta_file_attn_mask: str = ""
+    min_snr: float = None  # Add this line
+    speaker_ids: list[str] = None  # Add this line
 
     def check_values(
         self,

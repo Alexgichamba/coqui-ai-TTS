@@ -1005,6 +1005,70 @@ def bel_tts_formatter(root_path, meta_file, **kwargs):  # pylint: disable=unused
             items.append({"text": text, "audio_file": wav_file, "speaker_name": speaker_name, "root_path": root_path})
     return items
 
+def afro_formatter(root_path: str, meta_file: str, **kwargs):
+    """
+    Custom formatter for the Afro TTS dataset.
+    
+    Expects CSV with columns:
+    audio_id, audio_path, duration, transcription, source, speaker_id, language, snr_db, ...
+    
+    Args:
+        root_path (str): Root path to the dataset (directory containing audio files)
+        meta_file (str): Path to the CSV metadata file
+        **kwargs: Additional arguments (can include speaker_id filter)
+    
+    Returns:
+        List[Dict[str, str]]: List of dictionaries with keys:
+            - text: Transcription text
+            - audio_file: Full path to the audio file
+            - speaker_name: Speaker ID
+    """
+    import pandas as pd
+    
+    # Read CSV
+    df = pd.read_csv(meta_file)
+    
+    # Optional: filter by specific speakers if provided
+    if 'speaker_ids' in kwargs and kwargs['speaker_ids']:
+        print(f"Filtering for speakers: {kwargs['speaker_ids']}")
+        df = df[df['speaker_id'].isin(kwargs['speaker_ids'])]
+    
+    # Optional: filter by language
+    if 'language' in kwargs and kwargs['language']:
+        print(f"Filtering for language: {kwargs['language']}")
+        df = df[df['language'] == kwargs['language']]
+    
+    # Optional: filter by SNR threshold
+    if 'min_snr' in kwargs and kwargs['min_snr']:
+        print(f"Filtering for minimum SNR: {kwargs['min_snr']} dB")
+        df = df[df['snr_db'] >= kwargs['min_snr']]
+    
+    # Build the items list
+    items: list[dict[str, str]] = []
+    for _, row in df.iterrows():
+        # Construct full audio path
+        audio_path = os.path.join(root_path, row['audio_path'])
+        
+        # Check if file exists
+        if not os.path.exists(audio_path):
+            print(f"Audio file does not exist: {audio_path}. Skipping...")
+            continue
+            
+        text = str(row['transcription'])
+        speaker_name = str(row['speaker_id'])
+        language = str(row['language'])
+        
+        items.append(
+            {
+                "text": text,
+                "audio_file": audio_path,
+                "speaker_name": speaker_name,
+                "language": language,
+                "root_path": root_path,
+            }
+        )
+
+    return items
 
 ### Registrations
 register_formatter("cml_tts", cml_tts)
@@ -1036,3 +1100,4 @@ register_formatter("baker", baker)
 register_formatter("kokoro", kokoro)
 register_formatter("kss", kss)
 register_formatter("bel_tts_formatter", bel_tts_formatter)
+register_formatter("afro_formatter", afro_formatter)

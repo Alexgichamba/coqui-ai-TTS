@@ -229,3 +229,29 @@ def normalize_unicode(text: str) -> str:
     """Normalize Unicode characters."""
     text = normalize("NFC", text)
     return text
+
+def swahili_cleaners(text: str) -> str:
+    """Pipeline for Swahili text.
+    
+    Basic cleaning without aggressive normalization since Swahili is fairly phonetic.
+    """
+    text = normalize_unicode(text)
+    text = lowercase(text)
+    text = replace_symbols(text, lang=None)
+    text = remove_aux_symbols(text)
+    text = collapse_whitespace(text)
+    return text
+
+
+def yoruba_cleaners(text: str) -> str:
+    """Pipeline for Yoruba text.
+    
+    Preserves tone marks which are crucial for Yoruba pronunciation.
+    """
+    text = normalize_unicode(text)
+    text = lowercase(text)
+    # Don't remove tone marks! They're essential for Yoruba
+    text = replace_symbols(text, lang=None)
+    text = remove_aux_symbols(text)
+    text = collapse_whitespace(text)
+    return text

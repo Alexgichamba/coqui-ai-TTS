@@ -2,6 +2,7 @@ from TTS.tts.utils.text.phonemizers.base import BasePhonemizer
 from TTS.tts.utils.text.phonemizers.belarusian_phonemizer import BEL_Phonemizer
 from TTS.tts.utils.text.phonemizers.espeak_wrapper import ESpeak
 from TTS.tts.utils.text.phonemizers.gruut_wrapper import Gruut
+from TTS.tts.utils.text.phonemizers.epitran_wrapper import Epitran
 
 try:
     from TTS.tts.utils.text.phonemizers.bangla_phonemizer import BN_Phonemizer
@@ -23,11 +24,13 @@ try:
 except ImportError:
     ZH_CN_Phonemizer = None
 
-PHONEMIZERS = {b.name(): b for b in (ESpeak, Gruut)}
+# Register Epitran alongside ESpeak and Gruut
+PHONEMIZERS = {b.name(): b for b in (ESpeak, Gruut, Epitran)}
 
 
 ESPEAK_LANGS = list(ESpeak.supported_languages().keys())
 GRUUT_LANGS = list(Gruut.supported_languages())
+EPITRAN_LANGS = list(Epitran.supported_languages().keys())
 
 
 # Dict setting default phonemizers for each language
@@ -46,6 +49,11 @@ DEF_LANG_TO_PHONEMIZER.update(_new_dict)
 DEF_LANG_TO_PHONEMIZER["en"] = DEF_LANG_TO_PHONEMIZER["en-us"]
 DEF_LANG_TO_PHONEMIZER["be"] = BEL_Phonemizer.name()
 
+# Add Epitran as default for Swahili, Yoruba, Kinyarwanda, Hausa
+DEF_LANG_TO_PHONEMIZER["swa-Latn"] = Epitran.name()
+DEF_LANG_TO_PHONEMIZER["yor-Latn"] = Epitran.name()
+DEF_LANG_TO_PHONEMIZER["kin-Latn"] = Epitran.name()
+DEF_LANG_TO_PHONEMIZER["hau-Latn"] = Epitran.name()
 
 if BN_Phonemizer is not None:
     PHONEMIZERS[BN_Phonemizer.name()] = BN_Phonemizer
@@ -75,6 +83,8 @@ def get_phonemizer_by_name(name: str, **kwargs) -> BasePhonemizer:
         return ESpeak(**kwargs)
     if name == "gruut":
         return Gruut(**kwargs)
+    if name == "epitran":
+        return Epitran(**kwargs)
     if name == "zh_cn_phonemizer":
         if ZH_CN_Phonemizer is None:
             raise ValueError("You need to install ZH phonemizer dependencies. Try `pip install coqui-tts[zh]`.")
