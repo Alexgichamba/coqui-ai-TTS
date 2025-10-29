@@ -119,7 +119,11 @@ def load_tts_samples(
         if formatter is None:
             formatter = _get_formatter_by_name(formatter_name)
         # load train set
-        meta_data_train = formatter(root_path, meta_file_train, ignored_speakers=ignored_speakers)
+        # Pass through any additional kwargs from the dataset config
+        formatter_kwargs = {k: v for k, v in dataset.items() 
+                        if k not in ['formatter', 'dataset_name', 'path', 'meta_file_train', 
+                                        'meta_file_val', 'ignored_speakers', 'language', 'meta_file_attn_mask']}
+        meta_data_train = formatter(root_path, meta_file_train, ignored_speakers=ignored_speakers, **formatter_kwargs)
         assert len(meta_data_train) > 0, f" [!] No training samples found in {root_path}/{meta_file_train}"
 
         meta_data_train = add_extra_keys(meta_data_train, language, dataset_name)

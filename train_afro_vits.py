@@ -200,7 +200,7 @@ def parse_args():
     parser.add_argument(
         "--batch-size",
         type=int,
-        default=16,
+        default=32,
         help="Training batch size"
     )
     parser.add_argument(
@@ -395,11 +395,16 @@ def main():
         phonemizer=lang_config["phonemizer"],
         phoneme_cache_path=os.path.join(output_path, f"phoneme_cache_{args.language}"),
         compute_input_seq_cache=True,
+
+        # ADD THESE FILTERING PARAMETERS:
+        min_text_len=1,           # Minimum text length in characters
+        max_text_len=325,         # Maximum text length in characters
+        min_audio_len=int(0.2 * args.sample_rate),   # 0.2 seconds minimum (4,410 samples)
+        max_audio_len=int(20.0 * args.sample_rate),  # 20 seconds maximum (441,000 samples)
         
         print_step=25,
         print_eval=False,
         mixed_precision=args.mixed_precision,
-        max_text_len=325,
         output_path=output_path,
         datasets=[dataset_config],
         cudnn_benchmark=False,
@@ -408,29 +413,14 @@ def main():
         lr_gen=args.lr_gen,
         lr_disc=args.lr_disc,
         lr_scheduler_gen="ExponentialLR",
-        lr_scheduler_gen_params={"gamma": 0.999875, "last_epoch": -1},
+        lr_scheduler_gen_params={"gamma": 0.99999, "last_epoch": -1},
         lr_scheduler_disc="ExponentialLR",
-        lr_scheduler_disc_params={"gamma": 0.999875, "last_epoch": -1},
-        scheduler_after_epoch=True,
+        lr_scheduler_disc_params={"gamma": 0.99999, "last_epoch": -1},
+        scheduler_after_epoch=False,
     )
     
-    # Add test sentences
-    if not args.single_speaker and speaker_ids:
-        # Assign test sentences to different speakers
-        test_sentences = []
-        for i, sentence in enumerate(lang_config["test_sentences"][:len(speaker_ids)]):
-            test_sentences.append({
-                "text": sentence,
-                "speaker": speaker_ids[i % len(speaker_ids)],
-                "language": lang_config["lang_code"]
-            })
-        config.test_sentences = test_sentences
-    else:
-        # Single speaker or no specific speakers
-        config.test_sentences = [
-            {"text": sentence, "language": lang_config["lang_code"]}
-            for sentence in lang_config["test_sentences"][:4]
-        ]
+    # Add test sentences - use simple string format
+    config.test_sentences = lang_config["test_sentences"][:4]
     
     # Initialize audio processor
     ap = AudioProcessor.init_from_config(config)
