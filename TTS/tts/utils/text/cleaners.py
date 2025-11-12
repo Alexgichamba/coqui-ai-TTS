@@ -255,3 +255,30 @@ def yoruba_cleaners(text: str) -> str:
     text = remove_aux_symbols(text)
     text = collapse_whitespace(text)
     return text
+
+def hausa_cleaners(text: str) -> str:
+    """Pipeline for Hausa text.
+    
+    Basic cleaning for Hausa, which uses Latin script with some additional characters.
+    Preserves special characters like ɓ, ɗ, ƙ, ƴ which are important for Hausa.
+    """
+    text = normalize_unicode(text)
+    text = lowercase(text)
+    text = replace_symbols(text, lang=None)
+    text = remove_aux_symbols(text)
+    text = collapse_whitespace(text)
+    return text
+
+
+def kinyarwanda_cleaners(text: str) -> str:
+    """Pipeline for Kinyarwanda text.
+    
+    Basic cleaning for Kinyarwanda, which uses Latin script.
+    Kinyarwanda is fairly phonetic and regular in its orthography.
+    """
+    text = normalize_unicode(text)
+    text = lowercase(text)
+    text = replace_symbols(text, lang=None)
+    text = remove_aux_symbols(text)
+    text = collapse_whitespace(text)
+    return text
