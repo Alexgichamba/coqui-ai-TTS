@@ -66,7 +66,6 @@ LANGUAGE_CONFIGS = {
     }
 }
 
-
 def parse_args():
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
@@ -160,7 +159,7 @@ def parse_args():
     parser.add_argument(
         "--min-snr",
         type=float,
-        default=40.0,
+        default=15.0,
         help="Minimum SNR threshold for audio filtering"
     )
     
@@ -200,7 +199,7 @@ def parse_args():
     parser.add_argument(
         "--batch-size",
         type=int,
-        default=32,
+        default=48,
         help="Training batch size"
     )
     parser.add_argument(
@@ -228,10 +227,22 @@ def parse_args():
         help="Discriminator learning rate"
     )
     parser.add_argument(
+        "--T_0",
+        type=int,
+        default=100000,
+        help="Number of iterations for the first restart in cosine annealing"
+    )
+    parser.add_argument(
         "--num-loader-workers",
         type=int,
         default=4,
         help="Number of data loader workers"
+    )
+    parser.add_argument(
+        "--max-audio-length",
+        type=float,
+        default=20.0,
+        help="Maximum audio length in seconds"
     )
     parser.add_argument(
         "--mixed-precision",
@@ -400,7 +411,7 @@ def main():
         min_text_len=1,           # Minimum text length in characters
         max_text_len=325,         # Maximum text length in characters
         min_audio_len=int(0.2 * args.sample_rate),   # 0.2 seconds minimum (4,410 samples)
-        max_audio_len=int(20.0 * args.sample_rate),  # 20 seconds maximum (441,000 samples)
+        max_audio_len=int(args.max_audio_length * args.sample_rate),  # 20 seconds maximum (441,000 samples)
         
         print_step=25,
         print_eval=False,
@@ -412,12 +423,25 @@ def main():
         # Training parameters
         lr_gen=args.lr_gen,
         lr_disc=args.lr_disc,
-        lr_scheduler_gen="ExponentialLR",
-        lr_scheduler_gen_params={"gamma": 0.99999, "last_epoch": -1},
-        lr_scheduler_disc="ExponentialLR",
-        lr_scheduler_disc_params={"gamma": 0.99999, "last_epoch": -1},
+        
+        # Generator Scheduler
+        lr_scheduler_gen="CosineAnnealingWarmRestarts",
+        lr_scheduler_gen_params={
+            "T_0": 100000,      # Number of iterations for the first restart
+            "T_mult": 1,       # A factor by which T_0 increases after a restart
+            "eta_min": 1e-9    # Minimum learning rate
+        },
+        # Discriminator Scheduler
+        lr_scheduler_disc="CosineAnnealingWarmRestarts",
+        lr_scheduler_disc_params={
+            "T_0": 100000,
+            "T_mult": 1,
+            "eta_min": 1e-9
+        },
+        # Crucial: Keep this False so it updates every step
         scheduler_after_epoch=False,
     )
+
     
     # Add test sentences - use simple string format
     config.test_sentences = lang_config["test_sentences"][:4]
